@@ -16,15 +16,18 @@
 package com.example.busschedule
 
 import android.os.Bundle
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
+import android.view.*
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.example.busschedule.adapter.BusStopAdapter
 import com.example.busschedule.databinding.StopScheduleFragmentBinding
+import com.example.busschedule.viewmodels.BusScheduleViewModel
+import com.example.busschedule.viewmodels.BusScheduleViewModelFactory
+import kotlinx.coroutines.*
 
-class StopScheduleFragment: Fragment() {
+class StopScheduleFragment : Fragment() {
 
     companion object {
         var STOP_NAME = "stopName"
@@ -33,6 +36,12 @@ class StopScheduleFragment: Fragment() {
     private var _binding: StopScheduleFragmentBinding? = null
 
     private val binding get() = _binding!!
+
+    private val viewModel: BusScheduleViewModel by viewModels {
+        BusScheduleViewModelFactory(
+            (activity?.application as BusScheduleApplication).database.scheduleDao()
+        )
+    }
 
     private lateinit var recyclerView: RecyclerView
 
@@ -60,6 +69,17 @@ class StopScheduleFragment: Fragment() {
         super.onViewCreated(view, savedInstanceState)
         recyclerView = binding.recyclerView
         recyclerView.layoutManager = LinearLayoutManager(requireContext())
+
+        val busStopAdapter = BusStopAdapter {}
+        recyclerView.adapter = busStopAdapter
+
+// submitList() is a call that accesses the database. To prevent the
+// call from potentially locking the UI, you should use a
+// coroutine scope to launch the function. Using GlobalScope is not
+// best practice, and in the next step we'll see how to improve this.
+        GlobalScope.launch(Dispatchers.IO) {
+            busStopAdapter.submitList(viewModel.scheduleForStopName(stopName))
+        }
     }
 
     override fun onDestroyView() {
