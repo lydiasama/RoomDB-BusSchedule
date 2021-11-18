@@ -16,21 +16,20 @@
 package com.example.busschedule
 
 import android.os.Bundle
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
+import android.view.*
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.activityViewModels
+import androidx.fragment.app.viewModels
 import androidx.lifecycle.coroutineScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.example.busschedule.adapter.BusStopAdapter
 import com.example.busschedule.databinding.StopScheduleFragmentBinding
 import com.example.busschedule.viewmodels.BusScheduleViewModel
 import com.example.busschedule.viewmodels.BusScheduleViewModelFactory
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 
-class StopScheduleFragment: Fragment() {
+class StopScheduleFragment : Fragment() {
 
     companion object {
         var STOP_NAME = "stopName"
@@ -40,15 +39,15 @@ class StopScheduleFragment: Fragment() {
 
     private val binding get() = _binding!!
 
-    private lateinit var recyclerView: RecyclerView
-
-    private lateinit var stopName: String
-
-    private val viewModel: BusScheduleViewModel by activityViewModels {
+    private val viewModel: BusScheduleViewModel by viewModels {
         BusScheduleViewModelFactory(
             (activity?.application as BusScheduleApplication).database.scheduleDao()
         )
     }
+
+    private lateinit var recyclerView: RecyclerView
+
+    private lateinit var stopName: String
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -72,10 +71,10 @@ class StopScheduleFragment: Fragment() {
         super.onViewCreated(view, savedInstanceState)
         recyclerView = binding.recyclerView
         recyclerView.layoutManager = LinearLayoutManager(requireContext())
-        val busStopAdapter = BusStopAdapter({})
-        // by passing in the stop name, filtered results are returned,
-        // and tapping rows won't trigger navigation
+
+        val busStopAdapter = BusStopAdapter {}
         recyclerView.adapter = busStopAdapter
+
         lifecycle.coroutineScope.launch {
             viewModel.scheduleForStopName(stopName).collect() {
                 busStopAdapter.submitList(it)
